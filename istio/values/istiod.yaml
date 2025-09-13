@@ -1,0 +1,33 @@
+istiod:
+  autoscaleEnabled: true
+  autoscaleMin: 1
+  autoscaleMax: 5
+  replicaCount: 1
+  variant: "distroless"
+  cni:
+    enabled: true
+    provider: default
+  revision: "1-27-1"
+  revisionTags:
+    - default
+    - stable
+  meshConfig:
+    enableTracing: true
+    accessLogFile: /dev/stdout
+    accessLogEncoding: JSON
+    extensionProviders:
+      - name: otel-traces
+        opentelemetry:
+          service: opentelemetry-collector.observability.svc.cluster.local
+          port: 4317
+          grpc:
+            timeout: 10s
+      - name: otel-log-collector
+        envoyOtelAls:
+          service: opentelemetry-collector.observability.svc.cluster.local
+          port: 4317
+
+  global:
+    logAsJson: true
+    logging:
+      level: "default:info"

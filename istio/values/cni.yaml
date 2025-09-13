@@ -1,0 +1,8 @@
+cni:
+  variant: "distroless"
+  revision: "1-27-1"
+  global:
+    logging:
+      level: info
+    nativeNftables: false
+    logAsJson: true

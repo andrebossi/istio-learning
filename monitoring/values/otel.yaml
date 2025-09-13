@@ -1,0 +1,71 @@
+mode: deployment
+image:
+  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
+command:
+  name: "otelcol-k8s"
+
+config:
+  receivers:
+    prometheus:
+      config:
+        scrape_configs:
+          - job_name: 'kubernetes-pods'
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                action: keep
+                regex: true
+              - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+                action: replace
+                target_label: __metrics_path__
+                regex: (.+)
+              - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                action: replace
+                regex: (.+):(?:\d+);(\d+)
+                replacement: ${1}:${2}
+                target_label: __address__
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+  processors:
+    batch: {}
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 400
+      spike_limit_mib: 100
+
+  exporters:
+    otlp/prometheus:
+      endpoint: "http://prometheus-server.observability.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
+
+    otlp/jaeger:
+      endpoint: "jaeger-collector.observability.svc.cluster.local:14250"
+
+    loki:
+      endpoint: "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+
+  service:
+    pipelines:
+      metrics:
+        receivers: [prometheus, otlp]
+        processors: [memory_limiter, batch]
+        exporters: [otlp/prometheus]
+
+      traces:
+        receivers: [otlp, jaeger]
+        processors: [memory_limiter, batch]
+        exporters: [otlp/jaeger]
+
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [loki]
