@@ -1,0 +1,60 @@
+env:
+  GF_AUTH_DISABLE_LOGIN_FORM: "true"
+  JAEGER_AGENT_HOST: jaeger-agent.observability.svc.cluster.local
+  JAEGER_AGENT_PORT: "6831"
+  GF_AUTH_ANONYMOUS_ENABLED: "true"
+  GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+
+service:
+  type: LoadBalancer
+  port: 3000
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - uid: PBFA97CFB590B2093
+      orgId: 1
+      name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.observability.svc.cluster.local:80
+      access: proxy
+      isDefault: true
+
+    - uid: a821ncxas23s
+      orgId: 1
+      name: Loki
+      type: loki
+      url: http://loki.observability.svc.cluster.local:3100
+      access: proxy
+      isDefault: false
+
+    - uid: eey5smyw8kum8f
+      orgId: 1
+      name: jaeger
+      type: jaeger
+      typeLogoUrl: public/plugins/jaeger/img/jaeger_logo.svg
+      access: proxy
+      url: http://jaeger-query.observability.svc.cluster.local:80
+      user: ''
+      database: ''
+      basicAuth: false
+      basicAuthUser: ''
+      withCredentials: false
+      isDefault: false
+      jsonData:
+        pdcInjected: false
+        tlsSkipVerify: true
+        tracesToLogsV2:
+          customQuery: false
+          datasourceUid: a821ncxas23s
+          filterBySpanID: false
+          filterByTraceID: true
+          tags: []
+        tracesToMetrics:
+          datasourceUid: PBFA97CFB590B2093
+          queries: []
+      secureJsonFields: {}
+      version: 4
+      readOnly: false
+      apiVersion: ''

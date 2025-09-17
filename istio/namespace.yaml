@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-system
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-logging-default
+spec:
+  accessLogging:
+  - providers:
+    - name: otel-logs
+  metrics:
+  - providers:
+    - name: prometheus

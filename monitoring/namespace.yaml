@@ -4,8 +4,3 @@ metadata:
   name: observability
   labels:
     istio.io/dataplane-mode: ambient
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: cert-manager

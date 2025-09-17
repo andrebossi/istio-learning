@@ -1,8 +1,25 @@
+namespaceOverride: "observability"
 mode: deployment
 image:
   repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
 command:
   name: "otelcol-k8s"
+
+clusterRole:
+  create: true
+  rules:
+  - apiGroups:
+    - ''
+    resources:
+    - 'pods'
+    - 'nodes'
+    - 'services'
+    - 'endpoints'
+    - 'namespaces'
+    verbs:
+    - 'get'
+    - 'list'
+    - 'watch'
 
 config:
   receivers:
@@ -22,8 +39,8 @@ config:
                 regex: (.+)
               - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
                 action: replace
-                regex: (.+):(?:\d+);(\d+)
-                replacement: ${1}:${2}
+                regex: '(.+):(?:\d+);(\d+)'
+                replacement: '$1:$2'
                 target_label: __address__
     otlp:
       protocols:
@@ -31,41 +48,62 @@ config:
           endpoint: 0.0.0.0:4317
         http:
           endpoint: 0.0.0.0:4318
-    jaeger:
-      protocols:
-        grpc:
-          endpoint: 0.0.0.0:4317
 
   processors:
+    # transform/accesslogs:
+    #   log_statements:
+    #     - context: log
+    #       statements:
+    #       - parse_json(body, attributes)
+    #       - set(attributes["status_code"], attributes["response_code"])
+    #       - set(attributes["path"], attributes["path"])
+
+    resource:
+      attributes:
+        - key: k8s.cluster.environment
+          value: sandbox
+          action: insert
+        - key: k8s.cluster.name
+          value: kind-demo
+          action: insert
+
     batch: {}
+
     memory_limiter:
       check_interval: 1s
       limit_mib: 400
       spike_limit_mib: 100
 
   exporters:
-    otlp/prometheus:
-      endpoint: "http://prometheus-server.observability.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
+    # debug:
+    #   verbosity: detailed
+
+    otlphttp/prometheus:
+      endpoint: "http://prometheus-server.observability.svc.cluster.local:80/api/v1/otlp"
 
     otlp/jaeger:
       endpoint: "jaeger-collector.observability.svc.cluster.local:14250"
+      tls:
+        insecure: true
 
-    loki:
-      endpoint: "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+    otlphttp/loki:
+      endpoint: "http://loki.observability.svc.cluster.local:3100/otlp"
+      tls:
+        insecure: true
 
   service:
     pipelines:
       metrics:
         receivers: [prometheus, otlp]
-        processors: [memory_limiter, batch]
-        exporters: [otlp/prometheus]
+        processors: [resource, memory_limiter, batch]
+        exporters: [otlphttp/prometheus]
 
       traces:
         receivers: [otlp, jaeger]
-        processors: [memory_limiter, batch]
+        processors: [resource, memory_limiter, batch]
         exporters: [otlp/jaeger]
 
       logs:
         receivers: [otlp]
-        processors: [memory_limiter, batch]
-        exporters: [loki]
+        processors: [resource, memory_limiter, batch]
+        exporters: [otlphttp/loki]

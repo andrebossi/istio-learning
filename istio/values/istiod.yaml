@@ -12,17 +12,27 @@ istiod:
     - default
     - stable
   meshConfig:
-    enableTracing: true
     accessLogFile: /dev/stdout
     accessLogEncoding: JSON
+    # enableTracing: true
+    # defaultConfig:
+    #   tracing:
+    #     sampling: 100.0
+    #     max_path_tag_length: 256
+    #     custom_tags:
+    #       clusterID:
+    #         environment:
+    #           name: ISTIO_META_CLUSTER_ID
     extensionProviders:
-      - name: otel-traces
+      - name: otel-tracing
         opentelemetry:
           service: opentelemetry-collector.observability.svc.cluster.local
           port: 4317
+          resource_detectors:
+            environment: {}
           grpc:
             timeout: 10s
-      - name: otel-log-collector
+      - name: otel-logs
         envoyOtelAls:
           service: opentelemetry-collector.observability.svc.cluster.local
           port: 4317

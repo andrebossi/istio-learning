@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bookinfo
+  labels:
+    istio.io/dataplane-mode: ambient
+    istio.io/rev: "1-27-1"
+    # istio-injection: enabled

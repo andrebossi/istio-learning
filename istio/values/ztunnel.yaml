@@ -1,1 +1,4 @@
-revision: "1-27-1"
+ztunnel:
+  revision: "1-27-1"
+  logAsJson: true
+  logLevel: "default:info"

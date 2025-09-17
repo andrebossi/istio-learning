@@ -5,32 +5,31 @@ resources:
   - https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
   - namespace.yaml
 
-helmCharts:
-- name: cert-manager
-  repo: https://charts.jetstack.io
-  releaseName: cert-manager
-  namespace: cert-manager
+namespace: observability
 
+helmCharts:
 - name: opentelemetry-collector
   repo: https://open-telemetry.github.io/opentelemetry-helm-charts
   releaseName: opentelemetry-collector
-  namespace: observability
   valuesFile: values/otel.yaml
 
 - name: prometheus
   repo: https://prometheus-community.github.io/helm-charts
   releaseName: prometheus
-  namespace: observability
   valuesFile: values/prometheus.yaml
 
 - name: loki
   repo: https://grafana.github.io/helm-charts
   releaseName: loki
-  namespace: observability
   valuesFile: values/loki.yaml
 
 - name: jaeger
   repo: https://jaegertracing.github.io/helm-charts
   releaseName: jaeger
-  namespace: observability
   valuesFile: values/jaeger.yaml
+
+- name: grafana
+  repo: https://grafana.github.io/helm-charts
+  releaseName: grafana
+  version: 9.4.5
+  valuesFile: values/grafana.yaml
