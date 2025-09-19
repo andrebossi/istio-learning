@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curly
+  labels:
+    app: curly
+    app.kubernetes.io/name: curly
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curly
+  template:
+    metadata:
+      labels:
+        app: curly
+    spec:
+      containers:
+      - name: curl
+        image: curlimages/curl:latest
+        command: ["sleep"]
+        args: ["infinity"]
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"

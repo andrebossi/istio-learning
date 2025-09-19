@@ -50,13 +50,12 @@ config:
           endpoint: 0.0.0.0:4318
 
   processors:
-    # transform/accesslogs:
-    #   log_statements:
-    #     - context: log
-    #       statements:
-    #       - parse_json(body, attributes)
-    #       - set(attributes["status_code"], attributes["response_code"])
-    #       - set(attributes["path"], attributes["path"])
+    batch: {}
+
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 400
+      spike_limit_mib: 100
 
     resource:
       attributes:
@@ -67,16 +66,25 @@ config:
           value: kind-demo
           action: insert
 
-    batch: {}
-
-    memory_limiter:
-      check_interval: 1s
-      limit_mib: 400
-      spike_limit_mib: 100
+    transform/envoyjson:
+      log_statements:
+        - set(log.attributes["service.name"], resource.attributes["k8s.pod.name"])
+        - set(log.attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])
+        - set(log.attributes["k8s.pod.namespace"], resource.attributes["k8s.namespace.name"])
+        - set(log.attributes["http.path"], log.attributes["path"])
+        - set(log.attributes["http.host"], log.attributes["authority"])
+        - set(log.attributes["http.method"], log.attributes["method"])
+        - set(log.attributes["http.status"], log.attributes["response_code"])
+        - set(log.attributes["http.duration"], log.attributes["duration"])
+        - set(log.attributes["http.request_id"], log.attributes["request_id"])
+        - set(log.attributes["upstream.cluster"], log.attributes["upstream_cluster_raw"])
+        - set(log.attributes["downstream.address"], log.attributes["downstream_remote_address"])
+        - set(log.attributes["timestamp"], log.attributes["start_time"])
+        - set(log.attributes["log.type"], "envoy.access")
 
   exporters:
-    # debug:
-    #   verbosity: detailed
+    debug:
+      verbosity: detailed
 
     otlphttp/prometheus:
       endpoint: "http://prometheus-server.observability.svc.cluster.local:80/api/v1/otlp"
@@ -92,18 +100,21 @@ config:
         insecure: true
 
   service:
+    telemetry:
+      logs:
+        level: debug
     pipelines:
       metrics:
         receivers: [prometheus, otlp]
-        processors: [resource, memory_limiter, batch]
+        processors: [memory_limiter, batch, resource]
         exporters: [otlphttp/prometheus]
 
       traces:
         receivers: [otlp, jaeger]
-        processors: [resource, memory_limiter, batch]
+        processors: [memory_limiter, batch, resource]
         exporters: [otlp/jaeger]
 
       logs:
         receivers: [otlp]
-        processors: [resource, memory_limiter, batch]
-        exporters: [otlphttp/loki]
+        processors: [memory_limiter, batch, resourcem, transform/envoyjson]
+        exporters: [debug, otlphttp/loki]

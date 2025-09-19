@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-services
+spec:
+  hosts:
+  - httpbin.org
+  - swapi.dev
+  location: MESH_EXTERNAL
+  ports:
+  - number: 443
+    name: https
+    protocol: TLS
+  resolution: DNS
