@@ -3,6 +3,6 @@ kind: Namespace
 metadata:
   name: bookinfo
   labels:
-    istio.io/dataplane-mode: ambient
+    istio.io/dataplane-mode: none
     istio.io/rev: "1-27-1"
     # istio-injection: enabled

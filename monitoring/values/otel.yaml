@@ -66,22 +66,10 @@ config:
           value: kind-demo
           action: insert
 
-    transform/envoyjson:
-      log_statements:
-        - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
-        - set(log.attributes["service.name"], resource.attributes["k8s.pod.name"])
-        - set(log.attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])
-        - set(log.attributes["k8s.pod.namespace"], resource.attributes["k8s.namespace.name"])
-        - set(log.attributes["http.path"], log.attributes["path"])
-        - set(log.attributes["http.host"], log.attributes["authority"])
-        - set(log.attributes["http.method"], log.attributes["method"])
-        - set(log.attributes["http.status"], log.attributes["response_code"])
-        - set(log.attributes["http.duration"], log.attributes["duration"])
-        - set(log.attributes["http.request_id"], log.attributes["request_id"])
-        - set(log.attributes["upstream.cluster"], log.attributes["upstream_cluster_raw"])
-        - set(log.attributes["downstream.address"], log.attributes["downstream_remote_address"])
-        - set(log.attributes["timestamp"], log.attributes["start_time"])
-        - set(log.attributes["log.type"], "envoy.access")
+    # transform/envoyjson:
+    #   log_statements:
+    #     - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
+    #     - set(log.attributes["service.name"], resource.attributes["k8s.pod.name"])
 
   exporters:
     debug:
@@ -117,5 +105,5 @@ config:
 
       logs:
         receivers: [otlp]
-        processors: [memory_limiter, batch, resourcem, transform/envoyjson]
+        processors: [memory_limiter, batch, resource]
         exporters: [debug, otlphttp/loki]
