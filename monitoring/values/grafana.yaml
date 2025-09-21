@@ -5,6 +5,9 @@ env:
   GF_AUTH_ANONYMOUS_ENABLED: "true"
   GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
 
+testFramework:
+  enabled: false
+
 service:
   type: LoadBalancer
   port: 3000
@@ -35,7 +38,7 @@ datasources:
       type: jaeger
       typeLogoUrl: public/plugins/jaeger/img/jaeger_logo.svg
       access: proxy
-      url: http://jaeger-query.observability.svc.cluster.local:80
+      url: http://jaeger-query.observability.svc.cluster.local:16686
       user: ''
       database: ''
       basicAuth: false
