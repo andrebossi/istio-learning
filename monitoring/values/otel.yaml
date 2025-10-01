@@ -66,17 +66,18 @@ config:
           value: kind-demo
           action: insert
 
-    filter:
+    filter/drop_monitoring:
+      error_mode: ignore
       traces:
         span:
-          - 'ContainsValue(attributes["http.url"], "/prometheus")'
-          - 'ContainsValue(attributes["http.url"], "/metrics")'
-          - 'ContainsValue(attributes["http.url"], "/health")'
+          - 'IsMatch(attributes["http.url"], ".*prometheus.*")'
+          - 'IsMatch(attributes["http.url"], ".*metrics.*")'
+          - 'IsMatch(attributes["http.url"], ".*health.*")'
 
-    transform/istio-accesslog:
-      log_statements:
-        - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
-        - set(log.attributes["service.name"], resource.attributes["k8s.pod.name"])
+    # transform/istio-accesslog:
+    #   log_statements:
+    #     - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
+    #     - set(log.attributes["service.name"], resource.attributes["k8s.pod.name"])
 
   exporters:
     debug:
@@ -98,19 +99,25 @@ config:
   service:
     telemetry:
       logs:
-        level: info
+        level: debug
+        processors:
+        - batch:
+            exporter:
+              otlp:
+                protocol: http/protobuf
+                endpoint: http://loki.observability.svc.cluster.local:3100/otlp/v1/logs
     pipelines:
       metrics:
         receivers: [prometheus, otlp]
-        processors: [memory_limiter, batch, resource]
+        processors: [memory_limiter, resource]
         exporters: [otlphttp/prometheus]
 
       traces:
         receivers: [otlp, jaeger]
-        processors: [memory_limiter, batch, filter, resource]
+        processors: [memory_limiter, filter/drop_monitoring, resource]
         exporters: [otlp/jaeger]
 
       logs:
         receivers: [otlp]
-        processors: [memory_limiter, batch, transform/istio-accesslog, resource]
+        processors: [memory_limiter, resource]
         exporters: [debug, otlphttp/loki]
